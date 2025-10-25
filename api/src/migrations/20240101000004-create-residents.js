@@ -120,19 +120,6 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         defaultValue: false
       },
-      is_pregnant: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      pregnancy_due_date: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      vaccination_records: {
-        type: Sequelize.JSON,
-        allowNull: true,
-        comment: 'Vaccination history and records'
-      },
       emergency_contact_name: {
         type: Sequelize.STRING(100),
         allowNull: true
@@ -177,22 +164,6 @@ module.exports = {
         type: Sequelize.ENUM('manual', 'survey', 'online', 'mobile_app'),
         defaultValue: 'manual'
       },
-      is_migrant: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      migration_from: {
-        type: Sequelize.STRING(255),
-        allowNull: true
-      },
-      migration_date: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      migration_reason: {
-        type: Sequelize.STRING(255),
-        allowNull: true
-      },
       mother_tongue: {
         type: Sequelize.STRING(50),
         allowNull: true
@@ -224,14 +195,6 @@ module.exports = {
       is_deceased: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
-      },
-      death_date: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      death_certificate_number: {
-        type: Sequelize.STRING(50),
-        allowNull: true
       },
       need_employment: {
         type: Sequelize.BOOLEAN,
