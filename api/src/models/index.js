@@ -1,255 +1,93 @@
-const { sequelize, Sequelize } = require('../config/database');
+const { getSequelizeInstance, Sequelize } = require('../config/database');
 
-// Import all models
-const User = require('./User')(sequelize);
-const Household = require('./Household')(sequelize);
-const Resident = require('./Resident')(sequelize);
-const Conversation = require('./Conversation')(sequelize);
-const Event = require('./Event')(sequelize);
-const NotificationLog = require('./NotificationLog')(sequelize);
-const AuditTrail = require('./AuditTrail')(sequelize);
+// Function to initialize models - called after database connection is established
+const initializeModels = (sequelize) => {
+  // Import all models with sequelize instance
+  const User = require('./User')(sequelize);
+  const Household = require('./Household')(sequelize);
+  const WardSecretariat = require('./WardSecretariat')(sequelize);
+  const Resident = require('./Resident')(sequelize);
+  const ResidentBankDetails = require('./ResidentBankDetails')(sequelize);
+  const ResidentEmergencyContact = require('./ResidentEmergencyContact')(sequelize);
+  const ResidentEmployment = require('./ResidentEmployment')(sequelize);
+  const ResidentKYC = require('./ResidentKYC')(sequelize);
+  const Scheme = require('./Scheme')(sequelize);
+  const SchemeEnrollment = require('./SchemeEnrollment')(sequelize);
+  const Conversation = require('./Conversation')(sequelize);
+  const Event = require('./Event')(sequelize);
+  const NotificationLog = require('./NotificationLog')(sequelize);
+  const AuditTrail = require('./AuditTrail')(sequelize);
 
-// Create models object
-const models = {
-  User,
-  Household,
-  Resident,
-  Conversation,
-  Event,
-  NotificationLog,
-  AuditTrail,
-  sequelize,
-  Sequelize
+  return {
+    User,
+    Household,
+    WardSecretariat,
+    Resident,
+    ResidentBankDetails,
+    ResidentEmergencyContact,
+    ResidentEmployment,
+    ResidentKYC,
+    Scheme,
+    SchemeEnrollment,
+    Conversation,
+    Event,
+    NotificationLog,
+    AuditTrail
+  };
 };
 
-// Set up associations
-Object.keys(models).forEach(modelName => {
-  if (models[modelName].associate) {
-    models[modelName].associate(models);
-  }
-});
-
-// Add hooks for audit trail logging
-const auditableModels = ['User', 'Household', 'Resident', 'Conversation', 'Event'];
-
-auditableModels.forEach(modelName => {
-  const Model = models[modelName];
+// Setup associations after all models are created
+const setupAssociations = (models) => {
+  // Set up associations
+  Object.keys(models).forEach(modelName => {
+    if (models[modelName].associate) {
+      models[modelName].associate(models);
+    }
+  });
   
-  // Hook for create operations
-  Model.addHook('afterCreate', async (instance, options) => {
-    try {
-      await models.AuditTrail.createAuditLog({
-        entityType: modelName.toLowerCase(),
-        entityId: instance.id,
-        action: 'create',
-        updatedBy: options.userId || null,
-        newValues: instance.dataValues,
-        ipAddress: options.ipAddress || null,
-        userAgent: options.userAgent || null,
-        sessionId: options.sessionId || null,
-        requestId: options.requestId || null,
-        category: 'data_modification',
-        severity: 'low'
-      });
-    } catch (error) {
-      console.error('Audit trail logging failed for create:', error);
-    }
-  });
+  return models;
+};
 
-  // Hook for update operations
-  Model.addHook('afterUpdate', async (instance, options) => {
-    try {
-      const changedFields = instance.changed() || [];
-      const oldValues = {};
-      const newValues = {};
-      
-      changedFields.forEach(field => {
-        oldValues[field] = instance._previousDataValues[field];
-        newValues[field] = instance.dataValues[field];
-      });
-
-      if (changedFields.length > 0) {
-        await models.AuditTrail.createAuditLog({
-          entityType: modelName.toLowerCase(),
-          entityId: instance.id,
-          action: 'update',
-          updatedBy: options.userId || null,
-          oldValues,
-          newValues,
-          changedFields,
-          ipAddress: options.ipAddress || null,
-          userAgent: options.userAgent || null,
-          sessionId: options.sessionId || null,
-          requestId: options.requestId || null,
-          category: 'data_modification',
-          severity: 'low'
-        });
-      }
-    } catch (error) {
-      console.error('Audit trail logging failed for update:', error);
-    }
-  });
-
-  // Hook for delete operations
-  Model.addHook('afterDestroy', async (instance, options) => {
-    try {
-      await models.AuditTrail.createAuditLog({
-        entityType: modelName.toLowerCase(),
-        entityId: instance.id,
-        action: 'delete',
-        updatedBy: options.userId || null,
-        oldValues: instance.dataValues,
-        ipAddress: options.ipAddress || null,
-        userAgent: options.userAgent || null,
-        sessionId: options.sessionId || null,
-        requestId: options.requestId || null,
-        category: 'data_modification',
-        severity: 'medium'
-      });
-    } catch (error) {
-      console.error('Audit trail logging failed for delete:', error);
-    }
-  });
-});
-
-// Add authentication audit hooks for User model
-models.User.addHook('afterCreate', async (user, options) => {
-  if (options.isRegistration) {
-    try {
-      await models.AuditTrail.createAuditLog({
-        entityType: 'user',
-        entityId: user.id,
-        action: 'create',
-        updatedBy: user.id,
-        category: 'user_authentication',
-        severity: 'medium',
-        reason: 'User registration'
-      });
-    } catch (error) {
-      console.error('Audit trail logging failed for user registration:', error);
-    }
-  }
-});
-
-// Helper function to sync database
-const syncDatabase = async (options = {}) => {
+// Main function to get models - ensures database is initialized first
+const getModels = async () => {
   try {
-    console.log('🔄 Starting database synchronization...');
+    const sequelize = await getSequelizeInstance();
+    const models = initializeModels(sequelize);
+    const modelsWithAssociations = setupAssociations(models);
     
-    // Test connection first
-    await sequelize.authenticate();
-    console.log('✅ Database connection established successfully');
-    
-    // Sync models
-    const syncOptions = {
-      force: options.force || false,
-      alter: options.alter || false,
-      ...options
+    return {
+      ...modelsWithAssociations,
+      sequelize,
+      Sequelize
     };
-    
-    await sequelize.sync(syncOptions);
-    console.log('✅ Database models synchronized successfully');
-    
-    return true;
   } catch (error) {
-    console.error('❌ Database synchronization failed:', error);
+    console.error('Error initializing models:', error);
     throw error;
   }
 };
 
-// Helper function to create initial data
-const seedDatabase = async () => {
+// For backward compatibility and direct access (when database is already initialized)
+const getModelsSync = () => {
   try {
-    console.log('🌱 Starting database seeding...');
+    // This will only work if database is already initialized
+    const { sequelize } = require('../config/database');
+    const models = initializeModels(sequelize);
+    const modelsWithAssociations = setupAssociations(models);
     
-    // Check if admin user exists
-    const adminExists = await models.User.findOne({
-      where: { email: 'admin@wardmanagement.com' }
-    });
-    
-    if (!adminExists) {
-      // Create default admin user
-      const adminUser = await models.User.create({
-        name: 'System Administrator',
-        email: 'admin@wardmanagement.com',
-        password: 'admin123', // This will be hashed by the model hook
-        role: 'admin',
-        is_active: true,
-        email_verified: true
-      });
-      
-      console.log('✅ Default admin user created');
-      
-      // Log admin creation
-      await models.AuditTrail.createAuditLog({
-        entityType: 'user',
-        entityId: adminUser.id,
-        action: 'create',
-        updatedBy: adminUser.id,
-        category: 'system_administration',
-        severity: 'high',
-        reason: 'Initial system setup - Admin user creation'
-      });
-    }
-    
-    console.log('✅ Database seeding completed');
-    return true;
+    return {
+      ...modelsWithAssociations,
+      sequelize,
+      Sequelize
+    };
   } catch (error) {
-    console.error('❌ Database seeding failed:', error);
-    throw error;
-  }
-};
-
-// Helper function to get model statistics
-const getModelStats = async () => {
-  try {
-    const stats = {};
-    
-    for (const modelName of Object.keys(models)) {
-      if (models[modelName].count && typeof models[modelName].count === 'function') {
-        stats[modelName] = await models[modelName].count();
-      }
-    }
-    
-    return stats;
-  } catch (error) {
-    console.error('Error getting model statistics:', error);
-    return {};
-  }
-};
-
-// Helper function to validate model relationships
-const validateRelationships = async () => {
-  try {
-    console.log('🔍 Validating model relationships...');
-    
-    // Test basic relationships by creating sample queries
-    const tests = [
-      () => models.User.findOne({ include: ['conversations', 'created_events', 'audit_entries'] }),
-      () => models.Household.findOne({ include: ['residents', 'conversations'] }),
-      () => models.Resident.findOne({ include: ['household', 'conversations', 'notifications'] }),
-      () => models.Conversation.findOne({ include: ['resident', 'household', 'staff'] }),
-      () => models.Event.findOne({ include: ['creator', 'notifications'] }),
-      () => models.NotificationLog.findOne({ include: ['resident', 'household', 'event', 'user'] }),
-      () => models.AuditTrail.findOne({ include: ['user'] })
-    ];
-    
-    for (const test of tests) {
-      await test();
-    }
-    
-    console.log('✅ All model relationships validated successfully');
-    return true;
-  } catch (error) {
-    console.error('❌ Model relationship validation failed:', error);
-    return false;
+    console.error('Error getting models synchronously. Database may not be initialized.');
+    throw new Error('Database not initialized. Use getModels() instead or call getSequelizeInstance() first.');
   }
 };
 
 module.exports = {
-  ...models,
-  syncDatabase,
-  seedDatabase,
-  getModelStats,
-  validateRelationships
+  getModels,
+  getModelsSync,
+  initializeModels,
+  setupAssociations
 };

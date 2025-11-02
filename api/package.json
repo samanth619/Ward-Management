@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon --inspect server.js",
+    "migrate:up": "npx sequelize db:migrate",
+    "migrate:down": "npx sequelize db:migrate:undo",
     "test": "jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

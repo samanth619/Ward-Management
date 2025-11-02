@@ -251,7 +251,7 @@ module.exports = (sequelize) => {
         fields: ['household_number']
       },
       {
-        fields: ['ward_number']
+        fields: ['ward_secretariat_id']
       },
       {
         fields: ['pincode']

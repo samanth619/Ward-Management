@@ -20,6 +20,7 @@ const eventRoutes = require('./src/routes/eventRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const reportRoutes = require('./src/routes/reportRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const dashboardRoutes = require('./src/routes/dashboardRoutes');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  debugger;
   res.status(200).json({
     status: 'OK',
     message: 'Ward Management API is running',
@@ -76,6 +78,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // API documentation route
 app.get('/api', (req, res) => {
@@ -85,6 +88,7 @@ app.get('/api', (req, res) => {
     description: 'Backend API for Municipal Ward People Management Platform',
     endpoints: {
       auth: '/api/auth',
+      dashboard: '/api/dashboard',
       residents: '/api/residents',
       households: '/api/households',
       conversations: '/api/conversations',

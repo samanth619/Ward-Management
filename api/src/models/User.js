@@ -13,8 +13,13 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: false,
       validate: {
-        len: [2, 100],
-        notEmpty: true
+        notEmpty: {
+          msg: 'Name cannot be empty'
+        },
+        len: {
+          args: [2, 100],
+          msg: 'Name must be between 2 and 100 characters'
+        }
       }
     },
     email: {
@@ -22,16 +27,25 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true,
-        notEmpty: true
+        isEmail: {
+          msg: 'Must be a valid email address'
+        },
+        notEmpty: {
+          msg: 'Email cannot be empty'
+        }
       }
     },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false,
       validate: {
-        len: [6, 255],
-        notEmpty: true
+        notEmpty: {
+          msg: 'Password cannot be empty'
+        },
+        len: {
+          args: [8, 255],
+          msg: 'Password must be at least 8 characters long'
+        }
       }
     },
     role: {
@@ -39,25 +53,30 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: 'staff',
       validate: {
-        isIn: [['admin', 'staff', 'read_only']]
+        isIn: {
+          args: [['admin', 'staff', 'read_only']],
+          msg: 'Role must be admin, staff, or read_only'
+        }
       }
     },
     phone: {
       type: DataTypes.STRING(15),
       allowNull: true,
       validate: {
-        is: /^[+]?[\d\s-()]+$/i // Basic phone number validation
+        is: {
+          args: /^[\+]?[1-9][\d]{0,15}$/,
+          msg: 'Phone number must be valid'
+        }
       }
     },
     ward_number: {
       type: DataTypes.STRING(10),
-      allowNull: true,
-      comment: 'Ward number this user is responsible for'
+      allowNull: true
     },
     is_active: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true,
-      allowNull: false
+      allowNull: false,
+      defaultValue: true
     },
     last_login: {
       type: DataTypes.DATE,
@@ -65,15 +84,15 @@ module.exports = (sequelize) => {
     },
     email_verified: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false
+      allowNull: false,
+      defaultValue: false
     },
     email_verification_token: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(500),
       allowNull: true
     },
     password_reset_token: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(500),
       allowNull: true
     },
     password_reset_expires: {
@@ -81,54 +100,49 @@ module.exports = (sequelize) => {
       allowNull: true
     },
     profile_picture: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: 'URL or path to profile picture'
+      type: DataTypes.STRING(255),
+      allowNull: true
     },
     preferences: {
       type: DataTypes.JSONB,
-      allowNull: true,
       defaultValue: {},
-      comment: 'User preferences and settings'
+      allowNull: true
     }
   }, {
     tableName: 'users',
     timestamps: true,
-    paranoid: true, // Soft delete
-    indexes: [
-      {
-        unique: true,
-        fields: ['email']
-      },
-      {
-        fields: ['role']
-      },
-      {
-        fields: ['ward_number']
-      },
-      {
-        fields: ['is_active']
-      }
-    ],
+    paranoid: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    deletedAt: 'deleted_at',
     hooks: {
       beforeCreate: async (user) => {
         if (user.password) {
-          const salt = await bcrypt.genSalt(12);
-          user.password = await bcrypt.hash(user.password, salt);
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+        if (user.email) {
+          user.email = user.email.toLowerCase();
         }
       },
       beforeUpdate: async (user) => {
         if (user.changed('password')) {
-          const salt = await bcrypt.genSalt(12);
-          user.password = await bcrypt.hash(user.password, salt);
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+        if (user.changed('email')) {
+          user.email = user.email.toLowerCase();
         }
       }
     }
   });
 
   // Instance methods
+  User.prototype.comparePassword = async function(password) {
+    return bcrypt.compare(password, this.password);
+  };
+
+  // Alias for compatibility
   User.prototype.validatePassword = async function(password) {
-    return await bcrypt.compare(password, this.password);
+    return this.comparePassword(password);
   };
 
   User.prototype.toJSON = function() {
@@ -139,48 +153,139 @@ module.exports = (sequelize) => {
     return values;
   };
 
+  // Class methods
+  User.prototype.getPermissions = function() {
+    const permissions = {
+      admin: [
+        'user:create', 'user:read', 'user:update', 'user:delete',
+        'household:create', 'household:read', 'household:update', 'household:delete',
+        'resident:create', 'resident:read', 'resident:update', 'resident:delete',
+        'scheme:create', 'scheme:read', 'scheme:update', 'scheme:delete',
+        'event:create', 'event:read', 'event:update', 'event:delete',
+        'conversation:create', 'conversation:read', 'conversation:update', 'conversation:delete',
+        'notification:create', 'notification:read', 'notification:update', 'notification:delete',
+        'audit:read', 'system:manage'
+      ],
+      staff: [
+        'household:create', 'household:read', 'household:update',
+        'resident:create', 'resident:read', 'resident:update',
+        'scheme:read', 'scheme:update',
+        'event:create', 'event:read', 'event:update',
+        'conversation:create', 'conversation:read', 'conversation:update',
+        'notification:create', 'notification:read'
+      ],
+      read_only: [
+        'household:read', 'resident:read', 'scheme:read',
+        'event:read', 'conversation:read', 'notification:read'
+      ]
+    };
+    return permissions[this.role] || [];
+  };
+
+  User.prototype.hasPermission = function(permission) {
+    return this.getPermissions().includes(permission);
+  };
+
+  // Update last login method
   User.prototype.updateLastLogin = async function() {
     this.last_login = new Date();
     await this.save();
   };
 
-  // Class methods
+  // Static methods
   User.findByEmail = function(email) {
     return this.findOne({
       where: { email: email.toLowerCase() }
     });
   };
 
-  User.findActiveUsers = function() {
-    return this.findAll({
-      where: { is_active: true }
+  User.findByEmailWithPassword = function(email) {
+    return this.findOne({
+      where: { email: email.toLowerCase() },
+      attributes: { include: ['password'] }
     });
   };
 
-  User.findByRole = function(role) {
-    return this.findAll({
-      where: { role }
+  User.findActiveByEmail = function(email) {
+    return this.findOne({
+      where: { 
+        email: email.toLowerCase(),
+        is_active: true 
+      }
     });
   };
 
-  // Associations will be defined in the index file
   User.associate = function(models) {
-    // User has many conversations
+    // User has many conversations as staff
     User.hasMany(models.Conversation, {
       foreignKey: 'staff_id',
       as: 'conversations'
     });
 
-    // User has many events (created by)
+    // User has many events created
     User.hasMany(models.Event, {
       foreignKey: 'created_by',
       as: 'created_events'
     });
 
-    // User has many audit trail entries
+    // User has many schemes created
+    User.hasMany(models.Scheme, {
+      foreignKey: 'created_by',
+      as: 'created_schemes'
+    });
+
+    // User has many scheme enrollments applied
+    User.hasMany(models.SchemeEnrollment, {
+      foreignKey: 'applied_by',
+      as: 'applied_enrollments'
+    });
+
+    // User has many scheme enrollments approved
+    User.hasMany(models.SchemeEnrollment, {
+      foreignKey: 'approved_by',
+      as: 'approved_enrollments'
+    });
+
+    // User has many notifications
+    User.hasMany(models.NotificationLog, {
+      foreignKey: 'user_id',
+      as: 'notifications'
+    });
+
+    // User has many audit trails
     User.hasMany(models.AuditTrail, {
-      foreignKey: 'updated_by',
+      foreignKey: 'user_id',
       as: 'audit_entries'
+    });
+
+    // User has many ward secretariats updated
+    User.hasMany(models.WardSecretariat, {
+      foreignKey: 'last_updated_by',
+      as: 'updated_ward_secretariats'
+    });
+
+    // User has many households verified
+    User.hasMany(models.Household, {
+      foreignKey: 'verified_by',
+      as: 'verified_households'
+    });
+
+    // User has many residents verified
+    User.hasMany(models.Resident, {
+      foreignKey: 'verified_by',
+      as: 'verified_residents'
+    });
+
+    // User has many resident KYC verified
+    User.hasMany(models.ResidentKYC, {
+      foreignKey: 'verified_by',
+      as: 'verified_kyc'
+    });
+
+    // User has many conversations resolved
+    User.hasMany(models.Conversation, {
+      foreignKey: 'resolved_by',
+      as: 'resolved_conversations'
     });
   };
 

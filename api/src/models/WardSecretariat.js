@@ -8,78 +8,79 @@ module.exports = (sequelize) => {
       primaryKey: true,
       allowNull: false
     },
-    secretariat_code: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      unique: true,
-      comment: 'Unique secretariat identification code'
-    },
-    secretariat_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      validate: {
-        notEmpty: true,
-        len: [2, 255]
-      }
-    },
     ward_number: {
       type: DataTypes.STRING(10),
       allowNull: false,
-      validate: {
-        notEmpty: true
-      }
+      unique: true
     },
-    area_name: {
+    ward_name: {
       type: DataTypes.STRING(255),
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
-    },
-    mandal: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      comment: 'Mandal or administrative division'
-    },
-    district: {
-      type: DataTypes.STRING(100),
       allowNull: false
     },
-    state: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      defaultValue: 'Telangana'
+    secretariat_name: {
+      type: DataTypes.STRING(255),
+      allowNull: false
     },
-    pincode: {
-      type: DataTypes.STRING(10),
+    secretariat_code: {
+      type: DataTypes.STRING(20),
       allowNull: false,
-      validate: {
-        isNumeric: true,
-        len: [6, 10]
-      }
+      unique: true
     },
-    secretariat_address: {
+    area_description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    contact_person: {
+    total_population: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    total_households: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    male_population: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    female_population: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    other_population: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    secretary_name: {
       type: DataTypes.STRING(100),
-      allowNull: true,
-      comment: 'Secretary or in-charge person name'
+      allowNull: true
     },
-    contact_phone: {
+    secretary_phone: {
       type: DataTypes.STRING(15),
-      allowNull: true,
-      validate: {
-        is: /^[+]?[\d\s-()]+$/i
-      }
+      allowNull: true
     },
-    contact_email: {
+    secretary_email: {
       type: DataTypes.STRING(255),
       allowNull: true,
       validate: {
         isEmail: true
       }
+    },
+    assistant_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    assistant_phone: {
+      type: DataTypes.STRING(15),
+      allowNull: true
+    },
+    office_address: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     office_hours: {
       type: DataTypes.JSONB,
@@ -94,76 +95,48 @@ module.exports = (sequelize) => {
         sunday: { open: null, close: null }
       }
     },
-    total_households: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      validate: {
-        min: 0
-      }
-    },
-    total_population: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      validate: {
-        min: 0
-      }
-    },
-    government_offices_nearby: {
+    services_offered: {
       type: DataTypes.JSONB,
       allowNull: true,
-      defaultValue: [],
-      comment: 'Array of nearby government offices and landmarks'
+      comment: 'Array of services offered at this secretariat'
     },
-    landmarks: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-      defaultValue: [],
-      comment: 'Array of important landmarks in the area'
+    gps_coordinates: {
+      type: DataTypes.STRING(100),
+      allowNull: true
     },
-    services_available: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-      defaultValue: [],
-      comment: 'Services available at this secretariat'
+    pincode: {
+      type: DataTypes.STRING(10),
+      allowNull: false
     },
     is_active: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true
+      defaultValue: true,
+      allowNull: false
     },
-    established_date: {
-      type: DataTypes.DATEONLY,
+    establishment_date: {
+      type: DataTypes.DATE,
       allowNull: true
     },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    additional_info: {
-      type: DataTypes.JSONB,
+    last_updated_by: {
+      type: DataTypes.UUID,
       allowNull: true,
-      defaultValue: {},
-      comment: 'Additional secretariat information'
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     }
   }, {
     tableName: 'ward_secretariats',
     timestamps: true,
-    paranoid: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    paranoid: false,
     indexes: [
-      {
-        unique: true,
-        fields: ['secretariat_code']
-      },
       {
         fields: ['ward_number']
       },
       {
-        fields: ['area_name']
-      },
-      {
-        fields: ['district']
-      },
-      {
-        fields: ['pincode']
+        fields: ['secretariat_code']
       },
       {
         fields: ['is_active']
@@ -171,65 +144,15 @@ module.exports = (sequelize) => {
     ]
   });
 
-  // Instance methods
-  WardSecretariat.prototype.getFullAddress = function() {
-    let address = this.secretariat_name;
-    if (this.secretariat_address) address += ', ' + this.secretariat_address;
-    if (this.area_name) address += ', ' + this.area_name;
-    if (this.mandal) address += ', ' + this.mandal;
-    address += ', ' + this.district + ', ' + this.state + ' - ' + this.pincode;
-    return address;
-  };
-
-  WardSecretariat.prototype.updatePopulationStats = async function() {
-    const households = await this.getHouseholds();
-    this.total_households = households.length;
-    
-    let totalPopulation = 0;
-    for (const household of households) {
-      totalPopulation += household.total_members;
-    }
-    this.total_population = totalPopulation;
-    
-    await this.save();
-  };
-
-  // Class methods
-  WardSecretariat.findByWardNumber = function(wardNumber) {
-    return this.findOne({
-      where: { ward_number: wardNumber, is_active: true }
-    });
-  };
-
-  WardSecretariat.findByArea = function(areaName) {
-    const { Op } = sequelize.Sequelize;
-    return this.findAll({
-      where: {
-        area_name: { [Op.iLike]: `%${areaName}%` },
-        is_active: true
-      }
-    });
-  };
-
-  WardSecretariat.findByDistrict = function(district) {
-    return this.findAll({
-      where: { district, is_active: true },
-      order: [['area_name', 'ASC']]
-    });
-  };
-
-  // Associations
   WardSecretariat.associate = function(models) {
-    // WardSecretariat has many households
     WardSecretariat.hasMany(models.Household, {
       foreignKey: 'ward_secretariat_id',
       as: 'households'
     });
 
-    // WardSecretariat has many users (staff assigned to this ward)
-    WardSecretariat.hasMany(models.User, {
-      foreignKey: 'assigned_ward_secretariat_id',
-      as: 'assigned_staff'
+    WardSecretariat.belongsTo(models.User, {
+      foreignKey: 'last_updated_by',
+      as: 'updater'
     });
   };
 

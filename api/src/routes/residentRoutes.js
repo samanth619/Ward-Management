@@ -1,54 +1,74 @@
 const express = require('express');
 const router = express.Router();
 
-// @desc    Get all residents
+// Import controllers
+const {
+  getResidents,
+  getResidentById,
+  createResident,
+  updateResident,
+  deleteResident,
+  getResidentStats,
+  getResidentDemographics,
+  getUpcomingBirthdays,
+  getUpcomingAnniversaries,
+} = require('../controllers/residentController');
+
+// Import middleware
+const { protect } = require('../middleware/authMiddleware');
+const { validatePagination } = require('../middleware/validationMiddleware');
+
+/**
+ * Resident Management Routes
+ * All routes require authentication
+ */
+
+// Apply authentication to all routes
+router.use(protect);
+
+// @desc    Get resident statistics
+// @route   GET /api/residents/stats
+// @access  Private
+router.get('/stats', getResidentStats);
+
+// @desc    Get resident demographics
+// @route   GET /api/residents/demographics
+// @access  Private
+router.get('/demographics', getResidentDemographics);
+
+// @desc    Get upcoming birthdays
+// @route   GET /api/residents/birthdays/upcoming
+// @access  Private
+router.get('/birthdays/upcoming', getUpcomingBirthdays);
+
+// @desc    Get upcoming anniversaries
+// @route   GET /api/residents/anniversaries/upcoming
+// @access  Private
+router.get('/anniversaries/upcoming', getUpcomingAnniversaries);
+
+// @desc    Get all residents with pagination and filtering
 // @route   GET /api/residents
 // @access  Private
-router.get('/', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Get residents endpoint not implemented yet',
-  });
-});
+router.get('/', validatePagination, getResidents);
 
-// @desc    Get single resident
+// @desc    Get single resident by ID
 // @route   GET /api/residents/:id
 // @access  Private
-router.get('/:id', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Get resident endpoint not implemented yet',
-  });
-});
+router.get('/:id', getResidentById);
 
 // @desc    Create new resident
 // @route   POST /api/residents
 // @access  Private
-router.post('/', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Create resident endpoint not implemented yet',
-  });
-});
+router.post('/', createResident);
 
 // @desc    Update resident
 // @route   PUT /api/residents/:id
 // @access  Private
-router.put('/:id', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Update resident endpoint not implemented yet',
-  });
-});
+router.put('/:id', updateResident);
 
 // @desc    Delete resident
 // @route   DELETE /api/residents/:id
 // @access  Private
-router.delete('/:id', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Delete resident endpoint not implemented yet',
-  });
-});
+router.delete('/:id', deleteResident);
 
 module.exports = router;
