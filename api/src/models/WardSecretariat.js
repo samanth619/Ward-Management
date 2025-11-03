@@ -83,17 +83,9 @@ module.exports = (sequelize) => {
       allowNull: true
     },
     office_hours: {
-      type: DataTypes.JSONB,
+      type: DataTypes.STRING(100),
       allowNull: true,
-      defaultValue: {
-        monday: { open: '09:00', close: '17:00' },
-        tuesday: { open: '09:00', close: '17:00' },
-        wednesday: { open: '09:00', close: '17:00' },
-        thursday: { open: '09:00', close: '17:00' },
-        friday: { open: '09:00', close: '17:00' },
-        saturday: { open: '09:00', close: '13:00' },
-        sunday: { open: null, close: null }
-      }
+      comment: 'Office hours in text format (e.g., "Mon-Fri: 9AM-5PM")'
     },
     services_offered: {
       type: DataTypes.JSONB,

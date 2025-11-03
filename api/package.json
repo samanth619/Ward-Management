@@ -8,6 +8,8 @@
     "dev": "nodemon --inspect server.js",
     "migrate:up": "npx sequelize db:migrate",
     "migrate:down": "npx sequelize db:migrate:undo",
+    "seed": "npx sequelize db:seed:all",
+    "seed:undo": "npx sequelize db:seed:undo:all",
     "test": "jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

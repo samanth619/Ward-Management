@@ -228,11 +228,11 @@ const requireMinimumRole = (minimumRole) => {
 };
 
 /**
- * Check if user can access specific ward data
- * @param {Function} getWardNumber - Function to extract ward number from request
+ * Check if user can access specific ward secretariat data
+ * @param {Function} getWardSecretariatId - Function to extract ward secretariat ID from request
  * @returns {Function} Middleware function
  */
-const requireWardAccess = (getWardNumber) => {
+const requireWardAccess = (getWardSecretariatId) => {
   return (req, res, next) => {
     try {
       // Ensure user is authenticated first
@@ -245,38 +245,38 @@ const requireWardAccess = (getWardNumber) => {
       }
 
       const userRole = req.user.role;
-      const userWardNumber = req.user.ward_number;
+      const userWardSecretariatId = req.user.ward_secretariat_id;
 
-      // Admins can access all wards
+      // Admins can access all ward secretariats
       if (userRole === 'admin') {
         return next();
       }
 
-      // Get the ward number being accessed
-      const requestedWardNumber = getWardNumber(req);
+      // Get the ward secretariat ID being accessed
+      const requestedWardSecretariatId = getWardSecretariatId(req);
 
-      // If no specific ward is being accessed, allow (general endpoints)
-      if (!requestedWardNumber) {
+      // If no specific ward secretariat is being accessed, allow (general endpoints)
+      if (!requestedWardSecretariatId) {
         return next();
       }
 
-      // Staff and read_only users can only access their assigned ward
-      if (userWardNumber && userWardNumber === requestedWardNumber) {
+      // Staff and read_only users can only access their assigned ward secretariat
+      if (userWardSecretariatId && userWardSecretariatId === requestedWardSecretariatId) {
         return next();
       }
 
       return res.status(403).json({
         success: false,
-        message: 'Access denied. You can only access data from your assigned ward.',
+        message: 'Access denied. You can only access data from your assigned ward secretariat.',
         error_code: 'WARD_ACCESS_DENIED',
-        user_ward: userWardNumber,
-        requested_ward: requestedWardNumber,
+        user_ward_secretariat_id: userWardSecretariatId,
+        requested_ward_secretariat_id: requestedWardSecretariatId,
       });
     } catch (error) {
       console.error('Ward access middleware error:', error);
       return res.status(500).json({
         success: false,
-        message: 'Internal server error during ward access verification.',
+        message: 'Internal server error during ward secretariat access verification.',
         error_code: 'WARD_ACCESS_VERIFICATION_ERROR',
       });
     }

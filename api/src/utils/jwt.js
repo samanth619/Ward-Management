@@ -23,7 +23,7 @@ const generateAccessToken = (user) => {
     id: user.id,
     email: user.email,
     role: user.role,
-    ward_number: user.ward_number,
+    ward_secretariat_id: user.ward_secretariat_id,
     is_active: user.is_active,
   };
 

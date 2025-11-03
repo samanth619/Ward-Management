@@ -146,11 +146,11 @@ module.exports = (sequelize) => {
         key: 'id'
       }
     },
-    ward_numbers: {
+    ward_secretariat_ids: {
       type: DataTypes.JSONB,
       allowNull: true,
       defaultValue: [],
-      comment: 'Array of ward numbers this event is for'
+      comment: 'Array of ward secretariat IDs (UUIDs) this event is for'
     },
     notification_channels: {
       type: DataTypes.JSONB,
@@ -445,12 +445,12 @@ module.exports = (sequelize) => {
     });
   };
 
-  Event.findByWard = function(wardNumber) {
+  Event.findByWardSecretariat = function(wardSecretariatId) {
     const { Op } = sequelize.Sequelize;
     return this.findAll({
       where: {
         [Op.or]: [
-          { ward_numbers: { [Op.contains]: [wardNumber] } },
+          { ward_secretariat_ids: { [Op.contains]: [wardSecretariatId] } },
           { target_audience: 'all_residents' }
         ]
       },

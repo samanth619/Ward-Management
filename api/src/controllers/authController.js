@@ -26,7 +26,7 @@ const register = async (req, res) => {
       password, 
       phone, 
       role = 'staff', 
-      ward_number 
+      ward_secretariat_id 
     } = req.body;
 
     // Check if user already exists
@@ -46,7 +46,7 @@ const register = async (req, res) => {
       password,
       phone,
       role,
-      ward_number,
+      ward_secretariat_id,
       is_active: true, // Set to false if requiring admin approval
       email_verified: false,
     };
@@ -266,7 +266,7 @@ const updateProfile = async (req, res) => {
     const { User } = models;
 
     const user = req.user; // Set by protect middleware
-    const { name, phone, ward_number, preferences } = req.body;
+    const { name, phone, ward_secretariat_id, preferences } = req.body;
 
     // Prepare update data
     const updateData = {};
@@ -274,14 +274,14 @@ const updateProfile = async (req, res) => {
     if (phone !== undefined) updateData.phone = phone;
     if (preferences !== undefined) updateData.preferences = preferences;
     
-    // Only allow ward_number update for admins or if user doesn't have one
-    if (ward_number !== undefined) {
-      if (user.role === 'admin' || !user.ward_number) {
-        updateData.ward_number = ward_number;
+    // Only allow ward_secretariat_id update for admins or if user doesn't have one
+    if (ward_secretariat_id !== undefined) {
+      if (user.role === 'admin' || !user.ward_secretariat_id) {
+        updateData.ward_secretariat_id = ward_secretariat_id;
       } else {
         return res.status(403).json({
           success: false,
-          message: 'You cannot change your ward assignment. Contact an administrator.',
+          message: 'You cannot change your ward secretariat assignment. Contact an administrator.',
           error_code: 'WARD_UPDATE_FORBIDDEN',
         });
       }

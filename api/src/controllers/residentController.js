@@ -24,7 +24,7 @@ const getResidents = async (req, res) => {
       gender,
       household_id,
       is_active,
-      ward_number,
+      ward_secretariat_id,
     } = req.query;
 
     // Build where clause
@@ -56,10 +56,10 @@ const getResidents = async (req, res) => {
       whereClause.is_active = is_active === 'true';
     }
 
-    // Ward filter - filter through household
+    // Ward secretariat filter - filter through household
     let householdWhereClause = {};
-    if (ward_number) {
-      householdWhereClause.ward_secretariat_id = ward_number; // This might need adjustment based on actual schema
+    if (ward_secretariat_id) {
+      householdWhereClause.ward_secretariat_id = ward_secretariat_id;
     }
 
     // Pagination
@@ -105,7 +105,7 @@ const getResidents = async (req, res) => {
           gender,
           household_id,
           is_active,
-          ward_number,
+          ward_secretariat_id,
           sort,
           order,
         },

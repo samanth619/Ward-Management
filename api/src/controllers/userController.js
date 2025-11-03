@@ -28,7 +28,7 @@ const getUsers = async (req, res) => {
       order = 'desc',
       q,
       role,
-      ward_number,
+      ward_secretariat_id,
       is_active,
     } = req.query;
 
@@ -49,9 +49,9 @@ const getUsers = async (req, res) => {
       whereClause.role = role;
     }
 
-    // Ward number filter
-    if (ward_number) {
-      whereClause.ward_number = ward_number;
+    // Ward secretariat filter
+    if (ward_secretariat_id) {
+      whereClause.ward_secretariat_id = ward_secretariat_id;
     }
 
     // Active status filter
@@ -59,9 +59,9 @@ const getUsers = async (req, res) => {
       whereClause.is_active = is_active === 'true';
     }
 
-    // For non-admin users, limit to their ward
-    if (req.user.role !== 'admin' && req.user.ward_number) {
-      whereClause.ward_number = req.user.ward_number;
+    // For non-admin users, limit to their ward secretariat
+    if (req.user.role !== 'admin' && req.user.ward_secretariat_id) {
+      whereClause.ward_secretariat_id = req.user.ward_secretariat_id;
     }
 
     // Pagination
@@ -97,7 +97,7 @@ const getUsers = async (req, res) => {
         filters: {
           search: q,
           role,
-          ward_number,
+          ward_secretariat_id,
           is_active,
           sort,
           order,
@@ -146,12 +146,12 @@ const getUserById = async (req, res) => {
       });
     }
 
-    // For non-admin users, check ward access
-    if (currentUser.role !== 'admin' && currentUser.ward_number && 
-        user.ward_number && currentUser.ward_number !== user.ward_number) {
+    // For non-admin users, check ward secretariat access
+    if (currentUser.role !== 'admin' && currentUser.ward_secretariat_id && 
+        user.ward_secretariat_id && currentUser.ward_secretariat_id !== user.ward_secretariat_id) {
       return res.status(403).json({
         success: false,
-        message: 'You can only access users from your assigned ward',
+        message: 'You can only access users from your assigned ward secretariat',
         error_code: 'WARD_ACCESS_DENIED',
       });
     }
@@ -190,7 +190,7 @@ const createUser = async (req, res) => {
       password,
       phone,
       role = 'staff',
-      ward_number,
+      ward_secretariat_id,
       is_active = true,
       send_invitation = false,
     } = req.body;
@@ -211,7 +211,7 @@ const createUser = async (req, res) => {
       email: email.toLowerCase(),
       phone,
       role,
-      ward_number,
+      ward_secretariat_id,
       is_active,
       email_verified: false,
     };
@@ -269,7 +269,7 @@ const updateUser = async (req, res) => {
       name,
       phone,
       role,
-      ward_number,
+      ward_secretariat_id,
       is_active,
       preferences,
     } = req.body;
@@ -310,7 +310,7 @@ const updateUser = async (req, res) => {
     if (name !== undefined) updateData.name = name;
     if (phone !== undefined) updateData.phone = phone;
     if (role !== undefined) updateData.role = role;
-    if (ward_number !== undefined) updateData.ward_number = ward_number;
+    if (ward_secretariat_id !== undefined) updateData.ward_secretariat_id = ward_secretariat_id;
     if (is_active !== undefined) updateData.is_active = is_active;
     if (preferences !== undefined) updateData.preferences = preferences;
 
@@ -456,6 +456,9 @@ const resetUserPassword = async (req, res) => {
  */
 const getUserStats = async (req, res) => {
   try {
+    const models = await getModels();
+    const { User, WardSecretariat } = models;
+    
     // Get user counts by role
     const roleStats = await User.findAll({
       attributes: [
@@ -472,19 +475,25 @@ const getUserStats = async (req, res) => {
     const activeUsers = await User.count({ where: { is_active: true } });
     const inactiveUsers = totalUsers - activeUsers;
 
-    // Get users by ward
+    // Get users by ward secretariat
     const wardStats = await User.findAll({
       attributes: [
-        'ward_number',
-        [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count']
+        'ward_secretariat_id',
+        [User.sequelize.fn('COUNT', User.sequelize.col('User.id')), 'count']
       ],
+      include: [{
+        model: WardSecretariat,
+        as: 'ward_secretariat',
+        attributes: ['ward_number'],
+        required: false,
+      }],
       where: { 
         is_active: true,
-        ward_number: { [Op.not]: null }
+        ward_secretariat_id: { [Op.not]: null }
       },
-      group: ['ward_number'],
-      order: [['ward_number', 'ASC']],
-      raw: true,
+      group: ['ward_secretariat_id', 'ward_secretariat.id', 'ward_secretariat.ward_number'],
+      order: [[{ model: WardSecretariat, as: 'ward_secretariat' }, 'ward_number', 'ASC']],
+      raw: false,
     });
 
     // Get recent registrations (last 30 days)
@@ -508,7 +517,8 @@ const getUserStats = async (req, res) => {
           return acc;
         }, {}),
         ward_distribution: wardStats.reduce((acc, item) => {
-          acc[item.ward_number] = parseInt(item.count);
+          const wardNumber = item.ward_secretariat?.ward_number || item.ward_secretariat_id;
+          acc[wardNumber] = parseInt(item.dataValues.count || item.count || 0);
           return acc;
         }, {}),
         generated_at: new Date().toISOString(),

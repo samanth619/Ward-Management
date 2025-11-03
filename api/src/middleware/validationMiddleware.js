@@ -56,12 +56,10 @@ const roleValidation = body('role')
   .isIn(['admin', 'staff', 'read_only'])
   .withMessage('Role must be admin, staff, or read_only');
 
-const wardNumberValidation = body('ward_number')
+const wardSecretariatIdValidation = body('ward_secretariat_id')
   .optional()
-  .isLength({ min: 1, max: 10 })
-  .withMessage('Ward number must be between 1 and 10 characters')
-  .matches(/^[a-zA-Z0-9]+$/)
-  .withMessage('Ward number can only contain letters and numbers');
+  .isUUID()
+  .withMessage('Ward secretariat ID must be a valid UUID');
 
 // User registration validation
 const validateUserRegistration = [
@@ -70,7 +68,7 @@ const validateUserRegistration = [
   passwordValidation,
   phoneValidation,
   roleValidation,
-  wardNumberValidation,
+  wardSecretariatIdValidation,
   body('confirm_password')
     .custom((value, { req }) => {
       if (value !== req.body.password) {
@@ -139,12 +137,10 @@ const validatePasswordChange = [
 const validateProfileUpdate = [
   nameValidation.optional(),
   phoneValidation,
-  body('ward_number')
+  body('ward_secretariat_id')
     .optional()
-    .isLength({ min: 1, max: 10 })
-    .withMessage('Ward number must be between 1 and 10 characters')
-    .matches(/^[a-zA-Z0-9]+$/)
-    .withMessage('Ward number can only contain letters and numbers'),
+    .isUUID()
+    .withMessage('Ward secretariat ID must be a valid UUID'),
   body('preferences')
     .optional()
     .isObject()
@@ -259,10 +255,10 @@ const validateSearch = [
     .optional()
     .isIn(['admin', 'staff', 'read_only'])
     .withMessage('Role filter must be admin, staff, or read_only'),
-  query('ward_number')
+  query('ward_secretariat_id')
     .optional()
-    .isLength({ min: 1, max: 10 })
-    .withMessage('Ward number must be between 1 and 10 characters'),
+    .isUUID()
+    .withMessage('Ward secretariat ID must be a valid UUID'),
   query('is_active')
     .optional()
     .isBoolean()
@@ -327,7 +323,7 @@ const validateUniqueEmail = async (req, res, next) => {
 // Sanitization middleware
 const sanitizeInput = (req, res, next) => {
   // Trim string fields
-  const stringFields = ['name', 'email', 'phone', 'ward_number'];
+  const stringFields = ['name', 'email', 'phone'];
   stringFields.forEach(field => {
     if (req.body[field] && typeof req.body[field] === 'string') {
       req.body[field] = req.body[field].trim();

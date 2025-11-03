@@ -69,9 +69,14 @@ module.exports = (sequelize) => {
         }
       }
     },
-    ward_number: {
-      type: DataTypes.STRING(10),
-      allowNull: true
+    ward_secretariat_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'ward_secretariats',
+        key: 'id'
+      },
+      comment: 'Reference to ward secretariat for staff users'
     },
     is_active: {
       type: DataTypes.BOOLEAN,
@@ -270,17 +275,9 @@ module.exports = (sequelize) => {
       as: 'verified_households'
     });
 
-    // User has many residents verified
-    User.hasMany(models.Resident, {
-      foreignKey: 'verified_by',
-      as: 'verified_residents'
-    });
+    // Note: verified_by column doesn't exist in residents table, so association removed
 
-    // User has many resident KYC verified
-    User.hasMany(models.ResidentKYC, {
-      foreignKey: 'verified_by',
-      as: 'verified_kyc'
-    });
+    // Note: verified_by column doesn't exist in resident_kyc table, so association removed
 
     // User has many conversations resolved
     User.hasMany(models.Conversation, {

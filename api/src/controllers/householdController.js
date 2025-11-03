@@ -166,7 +166,7 @@ const getHouseholdById = async (req, res) => {
         {
           model: WardSecretariat,
           as: 'ward_secretariat',
-          attributes: ['id', 'ward_number', 'ward_name', 'ward_officer_name'],
+          attributes: ['id', 'ward_number', 'ward_name', 'secretary_name'],
         },
         {
           model: Resident,
