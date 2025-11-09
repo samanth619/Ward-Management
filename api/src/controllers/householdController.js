@@ -1,5 +1,5 @@
-const { getModels } = require('../models');
-const { Op } = require('sequelize');
+const { getModels } = require("../models");
+const { Op } = require("sequelize");
 
 /**
  * Household Management Controller for Ward Management System
@@ -18,8 +18,8 @@ const getHouseholds = async (req, res) => {
     const {
       page = 1,
       limit = 10,
-      sort = 'created_at',
-      order = 'desc',
+      sort = "created_at",
+      order = "desc",
       q,
       ward_secretariat_id,
       pincode,
@@ -39,9 +39,6 @@ const getHouseholds = async (req, res) => {
         { household_number: { [Op.iLike]: `%${q}%` } },
         { address_line1: { [Op.iLike]: `%${q}%` } },
         { address_line2: { [Op.iLike]: `%${q}%` } },
-        { head_of_family: { [Op.iLike]: `%${q}%` } },
-        { voter_id_primary: { [Op.iLike]: `%${q}%` } },
-        { ration_card_number: { [Op.iLike]: `%${q}%` } },
       ];
     }
 
@@ -72,7 +69,7 @@ const getHouseholds = async (req, res) => {
 
     // BPL filter
     if (is_bpl !== undefined) {
-      whereClause.is_bpl = is_bpl === 'true';
+      whereClause.is_bpl = is_bpl === "true";
     }
 
     // Verification status filter
@@ -89,16 +86,22 @@ const getHouseholds = async (req, res) => {
       include: [
         {
           model: WardSecretariat,
-          as: 'ward_secretariat',
-          attributes: ['id', 'ward_number', 'ward_name'],
+          as: "ward_secretariat",
+          attributes: ["id", "ward_number", "ward_name"],
           required: false,
         },
         {
           model: Resident,
-          as: 'residents',
+          as: "residents",
           where: { is_active: true },
           required: false,
-          attributes: ['id', 'first_name', 'last_name', 'resident_id', 'is_head_of_household'],
+          attributes: [
+            "id",
+            "first_name",
+            "last_name",
+            "resident_id",
+            "is_head_of_household",
+          ],
         },
       ],
       order: [[sort, order.toUpperCase()]],
@@ -114,7 +117,7 @@ const getHouseholds = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Households retrieved successfully',
+      message: "Households retrieved successfully",
       data: {
         households,
         pagination: {
@@ -140,11 +143,11 @@ const getHouseholds = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get households error:', error);
+    console.error("Get households error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve households',
-      error_code: 'GET_HOUSEHOLDS_FAILED',
+      message: "Failed to retrieve households",
+      error_code: "GET_HOUSEHOLDS_FAILED",
     });
   }
 };
@@ -165,14 +168,17 @@ const getHouseholdById = async (req, res) => {
       include: [
         {
           model: WardSecretariat,
-          as: 'ward_secretariat',
-          attributes: ['id', 'ward_number', 'ward_name', 'secretary_name'],
+          as: "ward_secretariat",
+          attributes: ["id", "ward_number", "ward_name", "secretary_name"],
         },
         {
           model: Resident,
-          as: 'residents',
+          as: "residents",
           attributes: { exclude: [] },
-          order: [['is_head_of_household', 'DESC'], ['date_of_birth', 'ASC']],
+          order: [
+            ["is_head_of_household", "DESC"],
+            ["date_of_birth", "ASC"],
+          ],
         },
       ],
     });
@@ -180,24 +186,24 @@ const getHouseholdById = async (req, res) => {
     if (!household) {
       return res.status(404).json({
         success: false,
-        message: 'Household not found',
-        error_code: 'HOUSEHOLD_NOT_FOUND',
+        message: "Household not found",
+        error_code: "HOUSEHOLD_NOT_FOUND",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Household retrieved successfully',
+      message: "Household retrieved successfully",
       data: {
         household,
       },
     });
   } catch (error) {
-    console.error('Get household by ID error:', error);
+    console.error("Get household by ID error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve household',
-      error_code: 'GET_HOUSEHOLD_FAILED',
+      message: "Failed to retrieve household",
+      error_code: "GET_HOUSEHOLD_FAILED",
     });
   }
 };
@@ -219,14 +225,6 @@ const createHousehold = async (req, res) => {
       landmark,
       pincode,
       ward_secretariat_id,
-      serial_number,
-      voter_id_primary,
-      ration_card_number,
-      head_of_family,
-      aadhaar_numbers,
-      government_offices_nearby,
-      schemes_eligible,
-      remarks_issues,
       area,
       city,
       state,
@@ -254,24 +252,28 @@ const createHousehold = async (req, res) => {
 
     // Validate ward secretariat exists (if provided)
     if (ward_secretariat_id) {
-      const wardSecretariat = await WardSecretariat.findByPk(ward_secretariat_id);
+      const wardSecretariat = await WardSecretariat.findByPk(
+        ward_secretariat_id
+      );
       if (!wardSecretariat) {
         return res.status(404).json({
           success: false,
-          message: 'Ward secretariat not found',
-          error_code: 'WARD_SECRETARIAT_NOT_FOUND',
+          message: "Ward secretariat not found",
+          error_code: "WARD_SECRETARIAT_NOT_FOUND",
         });
       }
     }
 
     // Check if household_number is unique (if provided)
     if (household_number) {
-      const existingHousehold = await Household.findOne({ where: { household_number } });
+      const existingHousehold = await Household.findOne({
+        where: { household_number },
+      });
       if (existingHousehold) {
         return res.status(400).json({
           success: false,
-          message: 'Household number already exists',
-          error_code: 'HOUSEHOLD_NUMBER_EXISTS',
+          message: "Household number already exists",
+          error_code: "HOUSEHOLD_NUMBER_EXISTS",
         });
       }
     }
@@ -284,27 +286,21 @@ const createHousehold = async (req, res) => {
       landmark,
       pincode,
       ward_secretariat_id,
-      serial_number,
-      voter_id_primary,
-      ration_card_number,
-      head_of_family,
-      aadhaar_numbers: aadhaar_numbers || [],
-      government_offices_nearby: government_offices_nearby || [],
-      schemes_eligible: schemes_eligible || [],
-      remarks_issues,
       area,
-      city: city || 'Municipal Ward',
+      city: city || "Municipal Ward",
       state,
       latitude,
       longitude,
-      property_type: property_type || 'residential',
-      ownership_type: ownership_type || 'owned',
+      property_type: property_type || "residential",
+      ownership_type: ownership_type || "owned",
       total_members: total_members || 0,
       adult_members: adult_members || 0,
       children_count: children_count || 0,
       senior_citizens_count: senior_citizens_count || 0,
-      electricity_connection: electricity_connection !== undefined ? electricity_connection : true,
-      water_connection: water_connection !== undefined ? water_connection : true,
+      electricity_connection:
+        electricity_connection !== undefined ? electricity_connection : true,
+      water_connection:
+        water_connection !== undefined ? water_connection : true,
       gas_connection: gas_connection || false,
       internet_connection: internet_connection || false,
       is_bpl: is_bpl || false,
@@ -313,7 +309,7 @@ const createHousehold = async (req, res) => {
       secondary_contact_number,
       email,
       notes,
-      verification_status: verification_status || 'pending',
+      verification_status: verification_status || "pending",
       additional_info: additional_info || {},
     });
 
@@ -322,25 +318,25 @@ const createHousehold = async (req, res) => {
       include: [
         {
           model: WardSecretariat,
-          as: 'ward_secretariat',
+          as: "ward_secretariat",
         },
       ],
     });
 
     res.status(201).json({
       success: true,
-      message: 'Household created successfully',
+      message: "Household created successfully",
       data: {
         household: createdHousehold,
       },
     });
   } catch (error) {
-    console.error('Create household error:', error);
+    console.error("Create household error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create household',
-      error_code: 'CREATE_HOUSEHOLD_FAILED',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      message: "Failed to create household",
+      error_code: "CREATE_HOUSEHOLD_FAILED",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -363,31 +359,41 @@ const updateHousehold = async (req, res) => {
     if (!household) {
       return res.status(404).json({
         success: false,
-        message: 'Household not found',
-        error_code: 'HOUSEHOLD_NOT_FOUND',
+        message: "Household not found",
+        error_code: "HOUSEHOLD_NOT_FOUND",
       });
     }
 
     // If ward_secretariat_id is being changed, validate new ward
-    if (updateData.ward_secretariat_id && updateData.ward_secretariat_id !== household.ward_secretariat_id) {
-      const wardSecretariat = await WardSecretariat.findByPk(updateData.ward_secretariat_id);
+    if (
+      updateData.ward_secretariat_id &&
+      updateData.ward_secretariat_id !== household.ward_secretariat_id
+    ) {
+      const wardSecretariat = await WardSecretariat.findByPk(
+        updateData.ward_secretariat_id
+      );
       if (!wardSecretariat) {
         return res.status(404).json({
           success: false,
-          message: 'Ward secretariat not found',
-          error_code: 'WARD_SECRETARIAT_NOT_FOUND',
+          message: "Ward secretariat not found",
+          error_code: "WARD_SECRETARIAT_NOT_FOUND",
         });
       }
     }
 
     // If household_number is being changed, check uniqueness
-    if (updateData.household_number && updateData.household_number !== household.household_number) {
-      const existingHousehold = await Household.findOne({ where: { household_number: updateData.household_number } });
+    if (
+      updateData.household_number &&
+      updateData.household_number !== household.household_number
+    ) {
+      const existingHousehold = await Household.findOne({
+        where: { household_number: updateData.household_number },
+      });
       if (existingHousehold) {
         return res.status(400).json({
           success: false,
-          message: 'Household number already exists',
-          error_code: 'HOUSEHOLD_NUMBER_EXISTS',
+          message: "Household number already exists",
+          error_code: "HOUSEHOLD_NUMBER_EXISTS",
         });
       }
     }
@@ -405,25 +411,25 @@ const updateHousehold = async (req, res) => {
       include: [
         {
           model: WardSecretariat,
-          as: 'ward_secretariat',
+          as: "ward_secretariat",
         },
       ],
     });
 
     res.status(200).json({
       success: true,
-      message: 'Household updated successfully',
+      message: "Household updated successfully",
       data: {
         household: updatedHousehold,
       },
     });
   } catch (error) {
-    console.error('Update household error:', error);
+    console.error("Update household error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update household',
-      error_code: 'UPDATE_HOUSEHOLD_FAILED',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      message: "Failed to update household",
+      error_code: "UPDATE_HOUSEHOLD_FAILED",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -445,8 +451,8 @@ const deleteHousehold = async (req, res) => {
     if (!household) {
       return res.status(404).json({
         success: false,
-        message: 'Household not found',
-        error_code: 'HOUSEHOLD_NOT_FOUND',
+        message: "Household not found",
+        error_code: "HOUSEHOLD_NOT_FOUND",
       });
     }
 
@@ -455,18 +461,18 @@ const deleteHousehold = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Household deleted successfully',
+      message: "Household deleted successfully",
       data: {
         deleted_household_id: id,
         deleted_at: new Date().toISOString(),
       },
     });
   } catch (error) {
-    console.error('Delete household error:', error);
+    console.error("Delete household error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete household',
-      error_code: 'DELETE_HOUSEHOLD_FAILED',
+      message: "Failed to delete household",
+      error_code: "DELETE_HOUSEHOLD_FAILED",
     });
   }
 };
@@ -487,20 +493,26 @@ const getHouseholdStats = async (req, res) => {
     // Property type distribution
     const propertyTypeStats = await Household.findAll({
       attributes: [
-        'property_type',
-        [Household.sequelize.fn('COUNT', Household.sequelize.col('id')), 'count'],
+        "property_type",
+        [
+          Household.sequelize.fn("COUNT", Household.sequelize.col("id")),
+          "count",
+        ],
       ],
-      group: ['property_type'],
+      group: ["property_type"],
       raw: true,
     });
 
     // Ownership type distribution
     const ownershipTypeStats = await Household.findAll({
       attributes: [
-        'ownership_type',
-        [Household.sequelize.fn('COUNT', Household.sequelize.col('id')), 'count'],
+        "ownership_type",
+        [
+          Household.sequelize.fn("COUNT", Household.sequelize.col("id")),
+          "count",
+        ],
       ],
-      group: ['ownership_type'],
+      group: ["ownership_type"],
       raw: true,
     });
 
@@ -511,17 +523,26 @@ const getHouseholdStats = async (req, res) => {
     // Verification status distribution
     const verificationStatusStats = await Household.findAll({
       attributes: [
-        'verification_status',
-        [Household.sequelize.fn('COUNT', Household.sequelize.col('id')), 'count'],
+        "verification_status",
+        [
+          Household.sequelize.fn("COUNT", Household.sequelize.col("id")),
+          "count",
+        ],
       ],
-      group: ['verification_status'],
+      group: ["verification_status"],
       raw: true,
     });
 
     // Total members across all households
     const totalMembersResult = await Household.findAll({
       attributes: [
-        [Household.sequelize.fn('SUM', Household.sequelize.col('total_members')), 'total'],
+        [
+          Household.sequelize.fn(
+            "SUM",
+            Household.sequelize.col("total_members")
+          ),
+          "total",
+        ],
       ],
       raw: true,
     });
@@ -530,14 +551,17 @@ const getHouseholdStats = async (req, res) => {
     // Households by ward
     const wardStats = await Household.findAll({
       attributes: [
-        'ward_secretariat_id',
-        [Household.sequelize.fn('COUNT', Household.sequelize.col('id')), 'count'],
+        "ward_secretariat_id",
+        [
+          Household.sequelize.fn("COUNT", Household.sequelize.col("id")),
+          "count",
+        ],
       ],
       where: {
         ward_secretariat_id: { [Op.not]: null },
       },
-      group: ['ward_secretariat_id'],
-      order: [['ward_secretariat_id', 'ASC']],
+      group: ["ward_secretariat_id"],
+      order: [["ward_secretariat_id", "ASC"]],
       raw: true,
     });
 
@@ -551,7 +575,7 @@ const getHouseholdStats = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Household statistics retrieved successfully',
+      message: "Household statistics retrieved successfully",
       data: {
         total_households: totalHouseholds,
         total_members: totalMembers,
@@ -566,10 +590,13 @@ const getHouseholdStats = async (req, res) => {
           acc[item.ownership_type] = parseInt(item.count);
           return acc;
         }, {}),
-        verification_status_distribution: verificationStatusStats.reduce((acc, item) => {
-          acc[item.verification_status] = parseInt(item.count);
-          return acc;
-        }, {}),
+        verification_status_distribution: verificationStatusStats.reduce(
+          (acc, item) => {
+            acc[item.verification_status] = parseInt(item.count);
+            return acc;
+          },
+          {}
+        ),
         ward_distribution: wardStats.reduce((acc, item) => {
           acc[item.ward_secretariat_id] = parseInt(item.count);
           return acc;
@@ -578,11 +605,11 @@ const getHouseholdStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get household stats error:', error);
+    console.error("Get household stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve household statistics',
-      error_code: 'GET_HOUSEHOLD_STATS_FAILED',
+      message: "Failed to retrieve household statistics",
+      error_code: "GET_HOUSEHOLD_STATS_FAILED",
     });
   }
 };
@@ -601,8 +628,8 @@ const getHouseholdsByWard = async (req, res) => {
     const {
       page = 1,
       limit = 10,
-      sort = 'created_at',
-      order = 'desc',
+      sort = "created_at",
+      order = "desc",
     } = req.query;
 
     const whereClause = {
@@ -618,15 +645,15 @@ const getHouseholdsByWard = async (req, res) => {
       include: [
         {
           model: WardSecretariat,
-          as: 'ward_secretariat',
-          attributes: ['id', 'ward_number', 'ward_name'],
+          as: "ward_secretariat",
+          attributes: ["id", "ward_number", "ward_name"],
         },
         {
           model: Resident,
-          as: 'residents',
+          as: "residents",
           where: { is_active: true },
           required: false,
-          attributes: ['id', 'first_name', 'last_name', 'is_head_of_household'],
+          attributes: ["id", "first_name", "last_name", "is_head_of_household"],
         },
       ],
       order: [[sort, order.toUpperCase()]],
@@ -642,7 +669,7 @@ const getHouseholdsByWard = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Households by ward retrieved successfully',
+      message: "Households by ward retrieved successfully",
       data: {
         households,
         pagination: {
@@ -657,11 +684,11 @@ const getHouseholdsByWard = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get households by ward error:', error);
+    console.error("Get households by ward error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to retrieve households by ward',
-      error_code: 'GET_HOUSEHOLDS_BY_WARD_FAILED',
+      message: "Failed to retrieve households by ward",
+      error_code: "GET_HOUSEHOLDS_BY_WARD_FAILED",
     });
   }
 };
@@ -675,4 +702,3 @@ module.exports = {
   getHouseholdStats,
   getHouseholdsByWard,
 };
-

@@ -301,6 +301,7 @@ module.exports = (sequelize) => {
     tableName: 'events',
     timestamps: true,
     paranoid: true, // Soft delete
+    deletedAt: 'deleted_at',
     indexes: [
       {
         unique: true,

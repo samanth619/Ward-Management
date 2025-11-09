@@ -236,6 +236,7 @@ module.exports = (sequelize) => {
     tableName: 'conversations',
     timestamps: true,
     paranoid: true, // Soft delete
+    deletedAt: 'deleted_at',
     indexes: [
       {
         unique: true,

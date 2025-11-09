@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 /**
  * JWT Utility functions for Ward Management System
@@ -7,9 +7,9 @@ const jwt = require('jsonwebtoken');
 // Generate JWT token
 const generateToken = (payload, options = {}) => {
   const defaultOptions = {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    issuer: process.env.JWT_ISSUER || 'ward-management-system',
-    audience: process.env.JWT_AUDIENCE || 'ward-management-users',
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    issuer: process.env.JWT_ISSUER || "ward-management-system",
+    audience: process.env.JWT_AUDIENCE || "ward-management-users",
   };
 
   const tokenOptions = { ...defaultOptions, ...options };
@@ -28,7 +28,7 @@ const generateAccessToken = (user) => {
   };
 
   return generateToken(payload, {
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
   });
 };
 
@@ -37,11 +37,11 @@ const generateRefreshToken = (user) => {
   const payload = {
     id: user.id,
     email: user.email,
-    type: 'refresh',
+    type: "refresh",
   };
 
   return generateToken(payload, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
   });
 };
 
@@ -50,11 +50,11 @@ const generateEmailVerificationToken = (user) => {
   const payload = {
     id: user.id,
     email: user.email,
-    type: 'email_verification',
+    type: "email_verification",
   };
 
   return generateToken(payload, {
-    expiresIn: process.env.JWT_EMAIL_VERIFICATION_EXPIRES_IN || '24h',
+    expiresIn: process.env.JWT_EMAIL_VERIFICATION_EXPIRES_IN || "24h",
   });
 };
 
@@ -63,11 +63,11 @@ const generatePasswordResetToken = (user) => {
   const payload = {
     id: user.id,
     email: user.email,
-    type: 'password_reset',
+    type: "password_reset",
   };
 
   return generateToken(payload, {
-    expiresIn: process.env.JWT_PASSWORD_RESET_EXPIRES_IN || '1h',
+    expiresIn: process.env.JWT_PASSWORD_RESET_EXPIRES_IN || "1h",
   });
 };
 
@@ -92,7 +92,7 @@ const isTokenExpired = (token) => {
     if (!decoded || !decoded.exp) {
       return true;
     }
-    
+
     const currentTime = Math.floor(Date.now() / 1000);
     return decoded.exp < currentTime;
   } catch (error) {
@@ -107,7 +107,7 @@ const extractTokenFromHeader = (authHeader) => {
   }
 
   // Support both "Bearer token" and "token" formats
-  if (authHeader.startsWith('Bearer ')) {
+  if (authHeader.startsWith("Bearer ")) {
     return authHeader.slice(7);
   }
 
@@ -126,7 +126,7 @@ const createTokenResponse = (user) => {
   return {
     access_token: accessToken,
     refresh_token: refreshToken,
-    token_type: 'Bearer',
+    token_type: "Bearer",
     expires_in: accessTokenDecoded.exp - Math.floor(Date.now() / 1000),
     expires_at: new Date(accessTokenDecoded.exp * 1000).toISOString(),
     refresh_expires_in: refreshTokenDecoded.exp - Math.floor(Date.now() / 1000),
@@ -135,12 +135,12 @@ const createTokenResponse = (user) => {
 };
 
 // Validate token payload structure
-const validateTokenPayload = (payload, requiredFields = ['id', 'email']) => {
-  if (!payload || typeof payload !== 'object') {
+const validateTokenPayload = (payload, requiredFields = ["id", "email"]) => {
+  if (!payload || typeof payload !== "object") {
     return false;
   }
 
-  return requiredFields.every(field => payload.hasOwnProperty(field));
+  return requiredFields.every((field) => payload.hasOwnProperty(field));
 };
 
 module.exports = {

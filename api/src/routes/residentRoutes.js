@@ -16,7 +16,7 @@ const {
 
 // Import middleware
 const { protect } = require('../middleware/authMiddleware');
-const { validatePagination } = require('../middleware/validationMiddleware');
+const { validateResidentPagination } = require('../middleware/validationMiddleware');
 
 /**
  * Resident Management Routes
@@ -49,7 +49,7 @@ router.get('/anniversaries/upcoming', getUpcomingAnniversaries);
 // @desc    Get all residents with pagination and filtering
 // @route   GET /api/residents
 // @access  Private
-router.get('/', validatePagination, getResidents);
+router.get('/', validateResidentPagination, getResidents);
 
 // @desc    Get single resident by ID
 // @route   GET /api/residents/:id

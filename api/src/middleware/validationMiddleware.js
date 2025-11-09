@@ -191,7 +191,7 @@ const validateUserCreation = [
     }),
   phoneValidation,
   roleValidation,
-  wardNumberValidation,
+  wardSecretariatIdValidation,
   body('is_active')
     .optional()
     .isBoolean()
@@ -211,7 +211,7 @@ const validateUserUpdate = [
     .optional()
     .isIn(['admin', 'staff', 'read_only'])
     .withMessage('Role must be admin, staff, or read_only'),
-  wardNumberValidation,
+  wardSecretariatIdValidation,
   body('is_active')
     .optional()
     .isBoolean()
@@ -223,7 +223,7 @@ const validateUserUpdate = [
   handleValidationErrors,
 ];
 
-// Pagination validation
+// Pagination validation (for users)
 const validatePagination = [
   query('page')
     .optional()
@@ -237,6 +237,27 @@ const validatePagination = [
     .optional()
     .isIn(['name', 'email', 'role', 'created_at', 'last_login'])
     .withMessage('Sort field must be name, email, role, created_at, or last_login'),
+  query('order')
+    .optional()
+    .isIn(['asc', 'desc'])
+    .withMessage('Order must be asc or desc'),
+  handleValidationErrors,
+];
+
+// Pagination validation for residents
+const validateResidentPagination = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+  query('sort')
+    .optional()
+    .isIn(['first_name', 'last_name', 'middle_name', 'date_of_birth', 'gender', 'occupation', 'caste', 'created_at', 'updated_at', 'resident_id'])
+    .withMessage('Sort field must be first_name, last_name, middle_name, date_of_birth, gender, occupation, caste, created_at, updated_at, or resident_id'),
   query('order')
     .optional()
     .isIn(['asc', 'desc'])
@@ -351,6 +372,7 @@ module.exports = {
   validateUserCreation,
   validateUserUpdate,
   validatePagination,
+  validateResidentPagination,
   validateSearch,
   validateFileUpload,
   validateUniqueEmail,

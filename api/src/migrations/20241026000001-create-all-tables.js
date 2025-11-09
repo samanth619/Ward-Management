@@ -302,6 +302,10 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     });
 
     // Add FK constraint for ward_secretariats.last_updated_by (references users)

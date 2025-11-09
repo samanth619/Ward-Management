@@ -13,7 +13,7 @@ const { Op } = require('sequelize');
 const getResidents = async (req, res) => {
   try {
     const models = await getModels();
-    const { Resident, Household } = models;
+    const { Resident, Household, WardSecretariat } = models;
 
     const {
       page = 1,
@@ -75,6 +75,14 @@ const getResidents = async (req, res) => {
           where: householdWhereClause,
           required: false,
           attributes: ['id', 'household_number', 'address_line1', 'ward_secretariat_id'],
+          include: [
+            {
+              model: WardSecretariat,
+              as: 'ward_secretariat',
+              required: false,
+              attributes: ['id', 'ward_name', 'ward_number'],
+            },
+          ],
         },
       ],
       order: [[sort, order.toUpperCase()]],
