@@ -15,6 +15,12 @@ module.exports = {
       acquire: 30000,
       idle: 10000,
     },
+    dialectOptions: {
+      ssl: process.env.DB_SSL === 'true' ? {
+        require: true,
+        rejectUnauthorized: false,
+      } : false,
+    },
   },
   test: {
     database: process.env.DB_NAME_TEST || 'ward_management_test',

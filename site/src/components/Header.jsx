@@ -1,4 +1,17 @@
-import { Box, Flex, Heading, HStack, Button, Menu, MenuButton, MenuList, MenuItem, Avatar, Text, useColorModeValue } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Heading,
+  HStack,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Avatar,
+  Text,
+  useColorModeValue,
+} from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -50,7 +63,7 @@ const Header = () => {
           >
             Ward Management
           </Heading>
-          
+
           <HStack spacing={4} display={{ base: "none", md: "flex" }}>
             <Button
               variant={isActive("/dashboard") ? "solid" : "ghost"}
@@ -111,4 +124,3 @@ const Header = () => {
 };
 
 export default Header;
-

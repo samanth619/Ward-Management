@@ -47,7 +47,13 @@ async function createDatabaseIfNotExists() {
     host: dbConfig.host,
     port: dbConfig.port,
     dialect: dbConfig.dialect,
-    logging: false // Suppress logs for system operations
+    logging: false, // Suppress logs for system operations
+    dialectOptions: {
+      ssl: process.env.DB_SSL === 'true' ? {
+        require: true,
+        rejectUnauthorized: false,
+      } : false,
+    },
   });
 
   try {
@@ -111,12 +117,12 @@ async function initializeDatabase() {
           underscored: true,
           freezeTableName: true
         },
-        dialectOptions: env === 'production' ? {
+        dialectOptions: {
           ssl: process.env.DB_SSL === 'true' ? {
             require: true,
             rejectUnauthorized: false
           } : false
-        } : {}
+        }
       }
     );
 
@@ -140,7 +146,13 @@ async function dropDatabase() {
     host: dbConfig.host,
     port: dbConfig.port,
     dialect: dbConfig.dialect,
-    logging: false
+    logging: false,
+    dialectOptions: {
+      ssl: process.env.DB_SSL === 'true' ? {
+        require: true,
+        rejectUnauthorized: false,
+      } : false,
+    },
   });
 
   try {
@@ -174,7 +186,13 @@ async function checkPostgreSQLServer() {
     host: dbConfig.host,
     port: dbConfig.port,
     dialect: dbConfig.dialect,
-    logging: false
+    logging: false,
+    dialectOptions: {
+      ssl: process.env.DB_SSL === 'true' ? {
+        require: true,
+        rejectUnauthorized: false,
+      } : false,
+    },
   });
 
   try {
